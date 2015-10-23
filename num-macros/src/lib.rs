@@ -132,8 +132,8 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
             let mut arms = Vec::new();
 
             for variant in &enum_def.variants {
-                match variant.node.kind {
-                    ast::TupleVariantKind(ref args) => {
+                match *variant.node.data {
+                    ast::VariantData::Tuple(ref args,_) => {
                         if !args.is_empty() {
                             cx.span_err(trait_span,
                                         "`FromPrimitive` cannot be derived for \
@@ -163,10 +163,17 @@ fn cs_from(name: &str, cx: &mut ExtCtxt, trait_span: Span, substr: &Substructure
 
                         arms.push(arm);
                     }
-                    ast::StructVariantKind(_) => {
+                    ast::VariantData::Struct(_,_) => {
                         cx.span_err(trait_span,
                                     "`FromPrimitive` cannot be derived for enums \
                                     with struct variants");
+                        return cx.expr_fail(trait_span,
+                                            InternedString::new(""));
+                    }
+                    ast::VariantData::Unit(_) => {
+                        cx.span_err(trait_span,
+                                    "`FromPrimitive` cannot be derived for enums \
+                                    with unit variants");
                         return cx.expr_fail(trait_span,
                                             InternedString::new(""));
                     }
